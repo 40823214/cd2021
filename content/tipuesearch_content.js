@@ -1,0 +1,1 @@
+var tipuesearch = {"pages": [{'title': '40823214 協同產品設計實習', 'text': '\n', 'tags': '', 'url': '40823214 協同產品設計實習.html'}, {'title': '分組設計', 'text': '', 'tags': '', 'url': '分組設計.html'}, {'title': '二人一組', 'text': '\n 組員 \n 40823214 林厚宇 \n 40823225 徐誠隆 \n \n', 'tags': '', 'url': '二人一組.html'}, {'title': '周誌表', 'text': '第一周 \n 分組，架設本網站', 'tags': '', 'url': '周誌表.html'}]};
