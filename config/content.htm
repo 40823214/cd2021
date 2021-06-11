@@ -249,7 +249,45 @@
 <p><a href="https://github.com/40823247/cd2021">40823247</a><a href="https://40823247.github.io/cd2021/content/index.html">/40823247</a> 許力右</p>
 <p><a href="https://github.com/40823248/cd2021">40823248</a><a href="https://40823248.github.io/cd2021/content/index.html">/40823248</a> 劉彥廷</p>
 <p>sshtest</p>
+<p></p><h2>計算角度</h2>
 <p></p>
+<p>計算到達指定位置馬達所需選轉的角度</p>
+<p><strong>步驟1</strong></p>
+<p>需要先知道各個零件的尺寸</p>
+<p><img alt="" height="800" src="/images/W13_1.png" width="1001"/></p>
+<p>可以得以下算式</p>
+<p><img alt="" height="195" src="/images/sec_1.png" width="636"/></p>
+<p><strong>步驟2</strong></p>
+<p>透過以下計算先將底座旋轉到目標與中心平面</p>
+<p><img alt="" height="151" src="/images/sec_2.png" width="544"/></p>
+<p><img alt="" height="800" src="/images/W13_2.png" width="1283"/></p>
+<p><strong>步驟3</strong></p>
+<p>取得新的X位置</p>
+<p><img alt="" height="150" src="/images/sec_3.png" width="582"/></p>
+<p><img alt="" height="800" src="/images/W13_2_5.png" width="1404"/></p>
+<p><strong>步驟4</strong></p>
+<p>取得目標物與旋轉中心的相對位置</p>
+<p>注 因吸盤保持水平 所以可以忽略其相對位置</p>
+<p><img alt="" height="110" src="/images/sec_4.png" width="926"/></p>
+<p><img alt="" height="800" src="/images/W13_3.png" width="968"/></p>
+<p><strong>步驟5</strong></p>
+<p>透過海龍公式(略) 可以得到面積</p>
+<p>知道面積可求三角形之高</p>
+<p><img alt="" height="126" src="/images/sec_5.png" width="437"/></p>
+<p><img alt="" height="800" src="/images/W13_4.png" width="1042"/></p>
+<p><strong>步驟6</strong></p>
+<p>旋轉基座馬達 但是需要減去原有的角度</p>
+<p><img alt="" height="131" src="/images/sec_6.png" width="839"/></p>
+<p><img alt="" height="800" src="/images/W13_5.png" width="963"/></p>
+<p><strong>步驟7</strong></p>
+<p>旋轉2臂</p>
+<p><img alt="" height="153" src="/images/sec_7.png" width="913"/></p>
+<p><img alt="" height="800" src="/images/W13_6.png" width="906"/></p>
+<p><strong>步驟8</strong></p>
+<p>旋轉夾具 </p>
+<p>注:因演示所以排在最後面，在實際作動時須排在第一位移動避免撞機</p>
+<p><img alt="" height="800" src="/images/W13_7.png" width="1141"/></p>
+<p></p><h1>CoppliaSim程式模擬</h1>
 <h2>CoppeliaSim 教學</h2>
 <h3>軸的旋轉教學</h3>
 <p><iframe allowfullscreen="allowfullscreen" height="314" src="//www.youtube.com/embed/-8QNOsZnV1c" width="560"></iframe></p>
@@ -1141,7 +1179,160 @@ end
 <p></p>
 <h2>W13 Pick and Place</h2>
 <p></p>
+<p><a href="http://mde.tw/cd2021/content/W13.html">課程要求</a></p>
 <p></p>
+<h3>remoteApi</h3>
+<p></p>
+<p>請見task2-remoteApi-&gt;W13 remoteApi</p>
+<p><a href="https://40823225.github.io/stage3-bg6/content/W13%C2%A0remoteApi.html">傳送門</a></p>
+<h3>0526更新</h3>
+<p>預計更新-remoteApi</p>
+<p>檔案下載</p>
+<p><a href="https://github.com/40823225/stage3-bg6/tree/main/downloads/W13_40823214">W13_pick and place</a></p>
+<p>影片:</p>
+<p>影片模擬時間為30分鐘，總共進行4次將球放到空盤再回復，理論上可以無限反覆模擬</p>
+<p><iframe allowfullscreen="allowfullscreen" height="314" src="//www.youtube.com/embed/OeSr68lxeSU" width="560"></iframe></p>
+<p><strong></strong>之前在舊版本中，會發現吸盤一直朝同一方向旋轉角度會誤差越來越大，所以在此場景中，將吸取設為正轉，放下設成反轉，即可以避免朝同一方向選轉造成的角度偏移問題</p>
+<p><strong>程式構想:</strong></p>
+<p>透過計算現在為拿取第幾個球，可以推算出該球在第幾層(unit)，也可以定為該層的起始座標(角落)</p>
+<p>知道在第幾層後可以反推出他是該層的第幾個(finding_XY)，進一步知道他的XY座標(X_Pos/Y_Pos)</p>
+<p>例: 第九顆球，可以得知在第三層，反推可以得知她是第4個，然後就可以得知她是第二排第一個，以此類推</p>
+<p>而在第30顆球過後，需要重新設定基準座標還有重設數量，才有最下面if問句</p>
+<p><strong>程式參考</strong></p>
+<pre class="brush:lua;auto-links:false;toolbar:false" contenteditable="false">function signal_switch(singal,enable)
+    if singal==1 or singal==12 then
+        sim.setIntegerSignal(modelName1 .."call_1",enable)
+    end
+    if singal==2 or singal==11 then
+        sim.setIntegerSignal(modelName2 .."call_2",enable)
+    end
+    if singal==3 or singal==10 then
+        sim.setIntegerSignal(modelName3 .."call_3",enable)
+    end
+    if singal==4 or singal==9 then
+        sim.setIntegerSignal(modelName4 .."call_4",enable)
+    end
+    if singal==5 or singal==8 then
+        sim.setIntegerSignal(modelName5 .."call_5",enable)
+    end
+    if singal==6 or singal==7 then
+        sim.setIntegerSignal(modelName6 .."call_6",enable)
+    end
+end
+
+function sysCall_threadmain()
+    joint01=sim.getObjectHandle('X')
+    joint02=sim.getObjectHandle('Y')
+    joint03=sim.getObjectHandle('Z')
+    jointr=sim.getObjectHandle('Rotate')
+    tt=1
+    long_t=1.5
+    long_long_t=3 --time set
+    rotate_deg=0 --pad rotate
+    atz=0  --altitude set
+    setx=0.5
+    setpx=-0.5 --center pick set
+    sety=-0.16
+    setpy=-0.16 --center fall set
+    local pick_high={"0.0645","0.134","0.2025","0.2768"} --pick up high set
+    local fall_high={"0.05","0.12","0.18","0.26"} --fall high set
+    local high_up={"0","0","0.05","0.12"}
+    cube=1              -- set cube
+    ball_pick_time=0    --total ball we pick
+    ball_put_time=31     --total ball we put
+    while (ball_pick_time&lt;60) do
+        for ball=1,6,1 do    --pick the ball
+            ball_pick_time=ball_pick_time+1 --total time we pick
+            i=1
+            unit=0
+            level=0
+            while level &lt; ball_pick_time do  --find which level and place should be of the xy coordinates
+                unit=unit+1
+                level=level+unit^2
+            end
+            finding_XY=ball_pick_time   --this is the XY on that floor
+            while(i&lt;=unit-1) do            
+                finding_XY=finding_XY-(i^2) 
+                i=i+1
+            end
+            X_Pos=finding_XY%unit       -- the X and Y coordinates(by balls)
+             if X_Pos==0 then
+                X_Pos=unit
+            end
+            Y_Pos=(math.ceil(finding_XY/unit)) 
+            BaseX=setx-((unit-1)*0.05)--now we need to find the 0 of the xy
+            BaseY=sety-((unit-1)*0.05)
+            sim.setJointTargetPosition(joint01,BaseX+(0.1*(X_Pos-1))) --move to Position
+            sim.wait(tt)
+            sim.setJointTargetPosition(joint02,BaseY+(0.1*(Y_Pos-1)))
+            sim.wait(tt)
+            signal_switch(ball,1) --switch pad on
+            sim.setJointTargetPosition(joint03,-pick_high[unit])--pick the pall
+            sim.wait(tt)
+            sim.setJointTargetPosition(joint03,atz-high_up[unit]) --after pick up we dont need to go that high
+            sim.wait(tt)
+            rotate_deg=rotate_deg+60  --rotate the pad
+            sim.setJointTargetPosition(jointr,rotate_deg*math.pi/180)
+            sim.wait(tt)
+            sim.wait(tt)
+        end
+        sim.wait(long_t)
+        sim.setJointTargetPosition(joint01,0)
+        sim.setJointTargetPosition(joint02,0)
+        sim.setJointTargetPosition(joint03,0)
+        sim.wait(long_t)
+        for ball=1,6,1 do --put the ball
+            ball_put_time=ball_put_time-1
+            i=1
+            unit=0
+            level=0
+            while level &lt; ball_put_time do  --find which level and place should be of the xy coordinates
+                unit=unit+1
+                level=level+unit^2
+            end
+            finding_XY=ball_put_time   --this is the XY on that floor
+            while(i&lt;=unit-1) do            
+                finding_XY=finding_XY-(i^2) 
+                i=i+1
+            end
+            X_Pos=finding_XY%unit       -- the X and Y coordinates(by balls)
+             if X_Pos==0 then
+                X_Pos=unit
+            end
+            Y_Pos=(math.ceil(finding_XY/unit)) 
+            BaseX=setpx-((unit-1)*0.05)--now we need to find the 0 of the xy
+            BaseY=setpy-((unit-1)*0.05)
+            rotate_deg=rotate_deg-60  --rotate the pad
+            sim.setJointTargetPosition(jointr,rotate_deg*math.pi/180)
+            sim.wait(tt)
+            sim.setJointTargetPosition(joint01,BaseX+(0.1*(X_Pos-1))) --move to Position
+            sim.wait(tt)
+            sim.setJointTargetPosition(joint02,BaseY+(0.1*(Y_Pos-1)))
+            sim.wait(tt)
+            sim.setJointTargetPosition(joint03,-fall_high[unit])--pick the pall
+            sim.wait(tt)
+            signal_switch(ball+6,0) --switch pad off
+            sim.wait(tt)
+            sim.setJointTargetPosition(joint03,atz-high_up[unit]) --after pick up we dont need to go that high
+            sim.wait(tt)
+            sim.wait(tt)
+        end
+        sim.wait(long_t)
+        sim.setJointTargetPosition(joint01,0)
+        sim.setJointTargetPosition(joint02,0)
+        sim.setJointTargetPosition(joint03,0)
+        sim.wait(long_t)
+        if ball_pick_time==30 then
+            pick_high={"0.07","0.138","0.2085","0.28"}
+            setx=-setx
+            setpx=-setpx
+            ball_pick_time=0
+            ball_put_time=31
+        end
+    end
+end</pre>
+<p></p>
+<h3>舊版本</h3>
 <p>預計更新內容:將簡化程式碼</p>
 <p>圖檔:</p>
 <p><a href="/downloads/W13 Pick and Place.ttt">W13 Pick and Place.ttt</a></p>
@@ -2751,6 +2942,28 @@ end</pre>
 <p></p>
 <p><img alt="" height="891" src="/images/C_1.jpg" width="800"/></p>
 <p><img alt="" height="636" src="/images/C_2.jpg" width="800"/></p>
+<h2>參考資料</h2>
+<p>coppeliasim 說明書</p>
+<p><a href="https://www.coppeliarobotics.com/helpFiles/index.html">https://www.coppeliarobotics.com/helpFiles/index.html</a></p>
+<p>coppeliasim 官方教學</p>
+<p><a href="https://www.coppeliarobotics.com/helpFiles/index.html">https://www.coppeliarobotics.com/helpFiles/index.html</a></p>
+<p>coppeliasim tutorial on youtube(播放清單</p>
+<p><a href="https://www.youtube.com/watch?v=WJrqt27cYrU&amp;list=PLjzuoBhdtaXOoqkJUqhYQletLLnJP8vjZ&amp;index=3">https://www.youtube.com/watch?v=WJrqt27cYrU&amp;list=PLjzuoBhdtaXOoqkJUqhYQletLLnJP8vjZ&amp;index=3</a></p>
+<p>Lua 程式指令</p>
+<p><a href="https://www.coppeliarobotics.com/helpFiles/index.html">https://www.coppeliarobotics.com/helpFiles/index.html</a></p>
+<p>coppeliasim suctionPad</p>
+<p><a href="https://www.youtube.com/watch?v=vRi2Up0yfyk&amp;t=1927s">https://www.youtube.com/watch?v=vRi2Up0yfyk&amp;t=1927s</a></p>
+<p>Python remoteApi:</p>
+<p><a href="https://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm">https://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm</a></p>
+<p>C++ remoteApi 系統設定:</p>
+<p><a href="https://blog.csdn.net/weixin_44745263/article/details/104555135">https://blog.csdn.net/weixin_44745263/article/details/104555135</a></p>
+<p>github 範例:</p>
+<p><a href="https://github.com/orivaldosantana/GPRo">https://github.com/orivaldosantana/GPRo</a></p>
+<p>coppeliasim 相關論壇 (參考內容太多，故僅列論壇首頁</p>
+<p><a href="https://forum.coppeliarobotics.com/index.php">https://forum.coppeliarobotics.com/index.php</a></p>
+<p>coppeliasim 教學部落格</p>
+<p><a href="https://www.jianshu.com/u/1e3e366da998">https://www.jianshu.com/u/1e3e366da998</a></p>
+<p></p>
 <p></p>
 <h2>舊資料</h2>
 <h3>0511 Programming in Lua on multiple program</h3>
@@ -2904,6 +3117,22 @@ print ('End')
 <p style="padding-left: 60px;"><a href="https://github.com/mdecourse/robocomp">https://github.com/mdecourse/robocomp</a></p>
 <p style="padding-left: 60px;">Code to connect RocoComp to V-REP</p>
 <p style="padding-left: 90px;"><a href="https://github.com/mdecourse/V-REP-component">https://github.com/mdecourse/V-REP-component</a></p>
+<h2>機械手臂多人對戰</h2>
+<p>圖檔下載</p>
+<p><a href="/downloads/robot arm fight">robot arm fight</a></p>
+<p>場景設定:</p>
+<p>需到根目錄之<span>remoteApiConnections.txt在最下方新增以下文字</span></p>
+<pre class="brush:html;auto-links:false;toolbar:false" contenteditable="false">portIndex2_port             = 19998
+portIndex2_debug            = false
+portIndex2_syncSimTrigger   = true</pre>
+<p>然後需要打開cmd 輸入ipconfig 查看ipv4位置</p>
+<p>再打開兩個主控程式將ipv4位置填入</p>
+<p>示範影片</p>
+<p><iframe allowfullscreen="allowfullscreen" height="314" src="//www.youtube.com/embed/I0R_q5HuuOU" width="560"></iframe></p>
+<p></p>
+<p>構想來源</p>
+<p><iframe allowfullscreen="allowfullscreen" height="314" src="//www.youtube.com/embed/cR-YlZ9NdIA" width="560"></iframe></p>
+<p></p>
 <h2>自動吹笛子機</h2>
 <p>Stage1-bg6 自動吹笛子機remoteApi</p>
 <p>控制:</p>
@@ -3171,6 +3400,221 @@ if clientID != -1:
         print ('Failed connecting to remote API server')
         print ('End')</pre>
 <p></p>
+<h2>W13 Pick and Place remoteApi</h2>
+<h3>0601</h3>
+<p>圖檔參考</p>
+<p><a href="https://github.com/40823225/stage3-bg6/tree/main/downloads/Pick%20and%20Place%20remote%20control">Pick and Place</a></p>
+<p>角度控制解說</p>
+<p><a href="https://40823225.github.io/stage3-bg6/content/%E8%A8%88%E7%AE%97%E8%A7%92%E5%BA%A6.html">https://40823225.github.io/stage3-bg6/content/%E8%A8%88%E7%AE%97%E8%A7%92%E5%BA%A6.html</a></p>
+<p>影片參考</p>
+<p><iframe allowfullscreen="allowfullscreen" height="314" src="//www.youtube.com/embed/lgBP-Mw2nIY" width="560"></iframe></p>
+<p>程式參考(python remoteApi)</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">import sim as vrep
+import math
+import random
+import time
+import math
+
+def rotate_motor(x,y,z,switch):
+    x=float(x)
+    y=float(y)
+    z=float(z)
+    deg1=math.atan(x/(1.415-y))
+    x=1.415-(1.415-y)/math.cos(deg1)
+    length=math.pow((math.pow(0.2,2)+math.pow(1.082,2)),0.5)
+    distance=math.pow((math.pow(1.082-x,2)+math.pow(0.96-z,2)),0.5)
+    perimeter=(length+distance+0.76)/2
+    area=math.pow(perimeter*(perimeter-length)*(perimeter-distance)*(perimeter-0.76),0.5)
+    high=2*area/distance
+    joint2_after_sita=math.asin(high/0.76)
+    joint2_zero_sita=math.atan((1.082-x)/(0.96-z))
+    deg2=joint2_after_sita-joint2_zero_sita
+    joint3_base=math.atan(1.082/0.2)
+    angle_joint3=math.acos(high/length)
+    deg3=(90*math.pi/180)+joint2_after_sita-angle_joint3-joint3_base
+    deg4=deg2-deg3
+    if switch==1:
+        vrep.simxSetJointTargetPosition(clientID,joint01,deg1,opmode)
+        vrep.simxSetJointTargetPosition(clientID,joint02,deg2,opmode)
+        vrep.simxSetJointTargetPosition(clientID,joint03,(-deg3),opmode)
+        vrep.simxSetJointTargetPosition(clientID,joint04,(-deg4),opmode)
+    if switch==2:
+        vrep.simxSetJointTargetPosition(clientID,joint03,(-deg3),opmode)
+        time.sleep(0.2)
+        vrep.simxSetJointTargetPosition(clientID,joint01,deg1,opmode)
+        vrep.simxSetJointTargetPosition(clientID,joint02,deg2,opmode)
+        vrep.simxSetJointTargetPosition(clientID,joint04,(-deg4),opmode)
+
+def signal_switch(singal):
+
+    if singal==1 :
+        vrep.simxSetIntegerSignal(clientID,"call_1",1,opmode) #here might have a error
+    if singal==2 :
+        vrep.simxSetIntegerSignal(clientID,"call_2",1,opmode)
+    if singal==3 :
+        vrep.simxSetIntegerSignal(clientID,"call_3",1,opmode)
+    if singal==4 :
+        vrep.simxSetIntegerSignal(clientID,"call_4",1,opmode)
+    if singal==5 :
+        vrep.simxSetIntegerSignal(clientID,"call_5",1,opmode)
+    if singal==6 :
+        vrep.simxSetIntegerSignal(clientID,"call_6",1,opmode)
+    if singal==12:
+        vrep.simxSetIntegerSignal(clientID,'call_1',0,opmode) #here might have a error
+    if singal==11:
+        vrep.simxSetIntegerSignal(clientID,"call_2",0,opmode)
+    if singal==10:
+        vrep.simxSetIntegerSignal(clientID,"call_3",0,opmode)
+    if singal==9:
+        vrep.simxSetIntegerSignal(clientID,"call_4",0,opmode)
+    if singal==8:
+        vrep.simxSetIntegerSignal(clientID,"call_5",0,opmode)
+    if singal==7:
+        vrep.simxSetIntegerSignal(clientID,"call_6",0,opmode)
+
+def clean():
+    vrep.simxSetIntegerSignal(clientID,"call_1",0,opmode)
+    vrep.simxSetIntegerSignal(clientID,"call_2",0,opmode)
+    vrep.simxSetIntegerSignal(clientID,"call_3",0,opmode)
+    vrep.simxSetIntegerSignal(clientID,"call_4",0,opmode)
+    vrep.simxSetIntegerSignal(clientID,"call_5",0,opmode)
+    vrep.simxSetIntegerSignal(clientID,"call_6",0,opmode)
+
+print ('Start')
+ 
+vrep.simxFinish(-1)
+ 
+clientID = vrep.simxStart('127.0.0.1', 19997, True, True, 5000, 5)
+  
+if clientID != -1:
+    print ('Connected to remote API server')
+      
+    res = vrep.simxAddStatusbarMessage(
+        clientID, "pad testing",
+        vrep.simx_opmode_oneshot)
+    if res not in (vrep.simx_return_ok, vrep.simx_return_novalue_flag):
+        print("Could not add a message to the status bar.")
+  
+     
+    opmode = vrep.simx_opmode_oneshot_wait
+    STREAMING = vrep.simx_opmode_streaming
+  
+     
+    vrep.simxStartSimulation(clientID, opmode)
+    ret,joint01=vrep.simxGetObjectHandle(clientID,"joint1",opmode)
+    ret,joint02=vrep.simxGetObjectHandle(clientID,"joint2",opmode)
+    ret,joint03=vrep.simxGetObjectHandle(clientID,"joint3",opmode)
+    ret,joint04=vrep.simxGetObjectHandle(clientID,"joint4",opmode)
+    ret,jointr=vrep.simxGetObjectHandle(clientID,"Rotate",opmode)
+    tt=1.5
+    long_t=3
+    long_long_t=3 #time set
+    rotate_deg=0 #pad rotate
+    atz=0  #altitude set
+    setx=-0.5
+    setpx=0.5 #center pick set
+    sety=0.16
+    setpy=0.16 #center fall set
+    cube=1              # set cube
+    ball_pick_time=0    #total ball we pick
+    ball_put_time=31     #total ball we put
+    put_cont=0          # print the ball we put
+    pick_high=['0.0645','0.134','0.202','0.2785'] #pick up high set
+    fall_high=['0.05','0.12','0.18','0.26'] #fall high set
+    high_up=['0','0','0.05','0.12']
+
+    
+    
+
+    while True :
+        clean() #clean all the 
+        vrep.simxSetJointTargetPosition(clientID,joint01,0,opmode)
+        vrep.simxSetJointTargetPosition(clientID,joint02,0,opmode)
+        vrep.simxSetJointTargetPosition(clientID,joint03,0,opmode)
+        vrep.simxSetJointTargetPosition(clientID,joint04,0,opmode)
+        vrep.simxSetJointTargetPosition(clientID,jointr,0,opmode)
+        time.sleep(tt)
+        for ball in range(1,7,1):
+            ball_pick_time=ball_pick_time+1 #total time we pick
+            i=1
+            unit=0
+            level=0
+            while level &lt; ball_pick_time :  #find which level and place should be of the xy coordinates
+                unit=unit+1
+                level=level+unit**2
+            finding_XY=ball_pick_time  #this is the XY on that floor
+            while i&lt;=unit-1:
+                finding_XY=finding_XY-(i**2) 
+                i=i+1
+            X_Pos=finding_XY%unit  #the X and Y coordinates(by balls)
+            if X_Pos==0:
+                X_Pos=unit
+            Y_Pos=(math.ceil(finding_XY/unit)) 
+            BaseX=setx-((unit-1)*0.05)#now we need to find the 0 of the xy
+            BaseY=sety-((unit-1)*0.05)
+            #vrep.simxSetJointTargetPosition(clientID,joint01,BaseX+(0.1*(X_Pos-1)),opmode)
+            #time.sleep(tt)
+            rotate_motor(BaseX+(0.1*(X_Pos-1)),BaseY+(0.1*(Y_Pos-1)),high_up[(unit-1)],1)
+            time.sleep(tt)
+            print("Picking up the ball nember",ball_pick_time,"...")
+            signal_switch(ball)
+            rotate_motor(BaseX+(0.1*(X_Pos-1)),BaseY+(0.1*(Y_Pos-1)),pick_high[(unit-1)],1)
+            time.sleep(tt)
+            rotate_motor(BaseX+(0.1*(X_Pos-1)),BaseY+(0.1*(Y_Pos-1)),high_up[(unit-1)],2)
+            time.sleep(tt)
+            rotate_deg=rotate_deg+60
+            vrep.simxSetJointTargetPosition(clientID,jointr,rotate_deg*math.pi/180,opmode)
+            time.sleep(tt)
+        vrep.simxSetJointTargetPosition(clientID,joint01,0,opmode)
+        vrep.simxSetJointTargetPosition(clientID,joint02,0,opmode)
+        vrep.simxSetJointTargetPosition(clientID,joint03,0,opmode)
+        vrep.simxSetJointTargetPosition(clientID,joint04,0,opmode)
+        vrep.simxSetJointTargetPosition(clientID,jointr,0,opmode)
+        time.sleep(tt)
+        for ball in range(1,7,1):
+            ball_put_time=ball_put_time-1 #total time we put
+            put_cont=put_cont+1
+            i=1
+            unit=0
+            level=0
+            while level &lt; ball_put_time :
+                unit=unit+1
+                level=level+unit**2
+            finding_XY=ball_put_time 
+            while i&lt;=unit-1:
+                finding_XY=finding_XY-(i**2) 
+                i=i+1
+            X_Pos=finding_XY%unit
+            if X_Pos==0:
+                X_Pos=unit
+            Y_Pos=(math.ceil(finding_XY/unit)) 
+            BaseX=setpx-((unit-1)*0.05)#now we need to find the 0 of the xy
+            BaseY=setpy-((unit-1)*0.05)
+            rotate_deg=rotate_deg-60
+            vrep.simxSetJointTargetPosition(clientID,jointr,rotate_deg*math.pi/180,opmode)
+            time.sleep(tt)
+            rotate_motor(BaseX+(0.1*(X_Pos-1)),BaseY+(0.1*(Y_Pos-1)),high_up[(unit-1)],1)
+            time.sleep(tt)
+            print("Putting the ball nember",put_cont,"...")
+            rotate_motor(BaseX+(0.1*(X_Pos-1)),BaseY+(0.1*(Y_Pos-1)),fall_high[(unit-1)],1)
+            time.sleep(tt)
+            signal_switch((ball+6))
+            time.sleep(0.5)
+            rotate_motor(BaseX+(0.1*(X_Pos-1)),BaseY+(0.1*(Y_Pos-1)),high_up[(unit-1)],1)
+            time.sleep(tt)
+        if ball_pick_time==30:
+            pick_high=['0.07','0.135','0.207','0.278']
+            setx=-setx
+            setpx=-setpx
+            ball_pick_time=0
+            ball_put_time=31
+            put_cont=0</pre>
+<p></p>
+<h3>0524</h3>
+<p>圖檔</p>
+<p><a href="https://github.com/40823225/stage3-bg6/tree/main/downloads/W13_40823214">W13 Pick and Place</a></p>
+<p><iframe allowfullscreen="allowfullscreen" height="314" src="//www.youtube.com/embed/L9Q6STVJBw0" width="560"></iframe></p>
+<p></p>
 <h2>remoteAPI in C++</h2>
 <h3>0511</h3>
 <p>嘗試以C++最為remoteAPI控制的語言</p>
@@ -3336,7 +3780,6 @@ int main(){
 <p>但是似乎還是一樣</p>
 <p><img alt="" height="321" src="/images/VS2019.jpg" width="800"/></p>
 <p>目前正在尋找其他解法來修復</p>
-<p></p>
 <p></p>
 <p></p>
 <h2>remoteApi in Lua</h2>
